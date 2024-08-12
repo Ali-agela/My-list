@@ -29,21 +29,40 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $tasks = Task::query();
-
-        if ($request->has('priority')){
-            $tasks = $tasks->where('priority','=',$request->input('priority'));
+    
+        if ($request->has('priority')) {
+            $tasks = $tasks->where('priority', '=', $request->input('priority'));
         }
-        if ($request->has('upcoming')){
-            $tasks = $tasks->where('before_date','>=',date('Y-m-d H-i'));
+        if ($request->has('upcoming')) {
+            $tasks = $tasks->where('before_date', '>=', date('Y-m-d H-i'));
         }
-        if ($request->has('sort')){
-            $tasks = $tasks->OrderBy($request->input('sort'));
+        if ($request->has('onlyDone')) {
+            $tasks = $tasks->where('is_done', '=', true);
         }
-        if($request->has('onlyDone')){
-            $tasks = $tasks->where("is_done","=",true);
+    
+        // Fetch tasks before sorting and grouping
+        $tasks = $tasks->get();
+    
+        if ($request->has('sort')) {
+            $sortField = $request->input('sort');
+            $sortOrder = $request->input('order', 'asc'); // Default to ascending if not specified
+    
+            if ($sortField == 'priority') {
+                $tasks = $tasks->sortBy(function ($task) {
+                    return array_search($task->priority, ['low', 'mid', 'high']);
+                }, SORT_REGULAR, $sortOrder == 'desc');
+            } else {
+                $tasks = $tasks->sortBy($sortField, SORT_REGULAR, $sortOrder == 'desc');
+            }
         }
+    
+        if ($request->has('groupBy')) {
+            $groupBy = $request->input('groupBy');
+            $tasks = $tasks->groupBy($groupBy);
+        }
+    
         return response()->json([
-            'data' => $tasks->get()
+            'data' => $tasks
         ]);
     }
     public function show( $id){
@@ -52,10 +71,10 @@ class TaskController extends Controller
     }
     public function update(Request $request, $id){
     $inputs = $request->validate([
-        'name' => ['string', 'required'],
-            'description' => ['max:1000'],
-            'is_done' => ['boolean'],
-            'before_date' => [],
+        'name' => ['string', 'sometimes'],
+            'description' => ['max:1000', 'sometimes'],
+            'is_done' => ['boolean','sometimes'],
+            'before_date' => ['sometimes'],
             'priority' => ['required', 'string', 'in:low,mid,high']
         ]);
         Task::findOrFail($id)->update($inputs);
@@ -66,7 +85,5 @@ class TaskController extends Controller
         $task->delete();
         return response()->json(['data'=>'task deleted']) ;
     }
-    public function tasks(){
-        
-    }
+  
 }

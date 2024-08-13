@@ -85,5 +85,14 @@ class TaskController extends Controller
         $task->delete();
         return response()->json(['data'=>'task deleted']) ;
     }
-  
+    public function complete($id){
+        $task = Task::where('id', "=",$id)->where("is_done","=",true)->firstOrFail();
+        $task->update(['is_done'=> true]);
+        return response()->json(['data'=> 'the task is changed to done'] );
+    }
+    public function cancel($id){
+        $task = Task::where('id', "=",$id)->where("is_done","=",false)->firstOrFail();
+        $task->update(['is_done'=> false]);
+        return response()->json(['data'=> 'the task is changed to undone'] );
+    }
 }

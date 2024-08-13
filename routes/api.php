@@ -17,3 +17,5 @@ Route::get('tasks',[TaskController::class,'index']);
 Route::get('tasks/{id}',[TaskController::class,'show']);
 Route::put('tasks/{id}',[TaskController::class,'update']);
 Route::delete('tasks/{id}', [TaskController::class,'destroy']);
+Route::put('tasks/{id}/complete', [TaskController::class,'complete']);
+Route::put('tasks/{id}/cancel', [TaskController::class,'cancel']);
